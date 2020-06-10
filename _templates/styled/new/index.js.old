@@ -1,0 +1,51 @@
+module.exports = {
+  prompt: ({ inquirer }) => {
+    // defining questions in arrays ensures all questions are asked before next prompt is executed
+    const questions = [
+      {
+        type: "input",
+        name: "path",
+        message: "Custom path",
+      },
+      {
+        type: "input",
+        name: "name",
+        message:
+          "Name, type and own props of the component. Ex: Item1,div,[name:title]",
+        initial: "Item1,div,[name:title]",
+      },
+      {
+        type: "input",
+        name: "children",
+        message: "Children? Ex: Item2,div,[name]/Item3,div,[title]",
+        //initial: 'Item2,div,[name]/Item3,div,[title]',
+      },
+    ]
+
+    return inquirer.prompt(questions).then(answers => {
+      const { children } = answers
+      const questions = []
+
+      // these values can be retrieved in the template with: eval(field + '.validation')
+      if (children && children !== "") {
+        const nbChildren = children.split("/").length
+        ;[...Array(+nbChildren).keys()].forEach(field => {
+          const parent = children.split("/")[field].split(",")[0]
+          questions.push({
+            type: "input",
+            name: "grandchildren." + field,
+            message: `Children of ${parent}`,
+          })
+        })
+        return inquirer
+          .prompt(questions)
+          .then(nextAnswers => Object.assign({}, answers, nextAnswers))
+      }
+      return inquirer
+        .prompt(questions)
+        .then(nextAnswers => Object.assign({}, answers, nextAnswers))
+
+      // both set of answers must be returned as a merged object, else the previous set of answers won't be available to the templates
+    })
+  },
+}
